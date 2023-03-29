@@ -1,0 +1,81 @@
+@echo OFF
+setlocal EnableDelayedExpansion
+if "%1"=="/conf" (
+  notepad %~dp0conf
+  exit
+)
+if "%1"=="/edit" (
+  notepad %0
+  exit
+)
+<"%~dp0conf" (for /f "delims=" %%a in ('more') do @set "%%a") 2>nul
+if "%1" == "" (
+  goto existD
+) else (
+  goto existA
+)
+:existD
+if exist "%default%" (
+  goto ok
+) else (
+  echo ERROR.
+  echo The path to the project is incorrect.
+  echo Use a command "push /conf" to configure.
+  PAUSE
+  exit
+)
+:existA
+@echo %1>data
+set /p value=<data
+@echo !%value%!>data
+set /p value2=<data
+if exist "%value2%" (
+  goto okA
+) else (
+  echo ERROR.
+  echo The path to the project is incorrect.
+  echo Use a command "push /conf" to configure.
+  PAUSE
+  exit
+)
+:okA
+%value2:~0,1%:
+cd %value2%
+goto okS
+:ok
+%default:~0,1%:
+cd %default%
+:okS
+if exist "%cd%\.git" (
+  git --version
+  echo -
+  goto ggo
+) else (
+  goto ggc
+)
+:ggc
+echo -
+echo Git repository not found, run initialization . . .
+echo -
+echo "# test-ssh" >> README.md
+git init
+echo -
+git branch -M main
+set /p gitUrl="Enter ssh url to your github rep: "
+echo -
+git remote add origin %gitUrl%
+:ggo
+echo Checking for changes...
+echo -
+git add .
+git status
+echo -
+set /p input="Input commit description: "
+echo -
+git commit -m "%input%"
+echo -
+echo Pushing...
+git push --all
+echo -
+echo COMPLITED
+PAUSE
